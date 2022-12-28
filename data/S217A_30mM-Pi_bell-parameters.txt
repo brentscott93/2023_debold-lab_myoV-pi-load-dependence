@@ -1,0 +1,5 @@
+# A tibble: 2 × 5
+  term  estimate std.error statistic p.value
+  <chr>    <dbl>     <dbl>     <dbl>   <dbl>
+1 k0        1.29     0.490      2.63   0.232
+2 d         3.64     0.740      4.91   0.128

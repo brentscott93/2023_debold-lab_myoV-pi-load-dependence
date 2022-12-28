@@ -13,6 +13,7 @@
                                     magick 
                                     ggtext 
                                     drc 
+                                    ggpubr
                                     readxl 
                                     randomcoloR 
                                     dplyr ];
