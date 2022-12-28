@@ -1,0 +1,28 @@
+
+Formula: rateAvg ~ k0 * exp((forceAvg * d)/4.1)
+
+Parameters:
+   Estimate Std. Error t value Pr(>|t|)  
+k0  5.57612    0.41582  13.410   0.0474 *
+d   0.69708    0.09677   7.203   0.0878 .
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.4313 on 1 degrees of freedom
+
+Number of iterations to convergence: 6 
+Achieved convergence tolerance: 1.223e-06
+
+
+Formula: rateAvg ~ k0 * exp((forceAvg * d)/4.1)
+
+Parameters:
+   Estimate Std. Error t value Pr(>|t|)
+k0   1.3521     0.5346   2.529    0.240
+d    3.5351     0.7657   4.617    0.136
+
+Residual standard error: 0.7865 on 1 degrees of freedom
+
+Number of iterations to convergence: 4 
+Achieved convergence tolerance: 3.28e-07
+

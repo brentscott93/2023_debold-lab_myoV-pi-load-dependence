@@ -1,0 +1,712 @@
+library(data.table)
+library(ggplot2)
+library(cowplot)
+library(RColorBrewer)
+library(magick)
+library(ggridges)
+library(ggtext)
+library(ggpattern)
+# read in data
+myoV <- fread("data/MyoV_Pi_Rebind_Events4.csv")
+
+# rename conditions 
+# MYOSIN_PI_POWER
+myoV$conditions2 <- ifelse(myoV$conditions == "S217A", "S217A_0mM-Pi_1.5-W",
+                     ifelse(myoV$conditions == "S217A 30mM Pi","S217A_30mM-Pi_1.5-W",
+                      ifelse(myoV$conditions == "S217A 30mM Pi 2W", "S217A_30mM-Pi_2-W",
+                       ifelse(myoV$conditions == "S217A 30mM Pi_3W", "S217A_30mM-Pi_3-W",
+                        ifelse(myoV$conditions == "WT", "WT_0mM-Pi_1.5-W",
+                         ifelse(myoV$conditions == "WT 30mM Pi", "WT_30mM-Pi_1.5-W", 
+                          ifelse(myoV$conditions == "WT 30mM Pi 2W", "WT_30mM-Pi_2-W",
+                           ifelse(myoV$conditions == "WT 30mM Pi_3W", "WT_30mM-Pi_3-W", "un-labeled"
+                           )
+                          )
+                         )
+                        )
+                       )
+                      )
+                     )
+                    )
+
+myoV$conditions2 <- factor(myoV$conditions2, levels = c("WT_0mM-Pi_1.5-W",
+                                                        "WT_30mM-Pi_1.5-W",
+                                                        "WT_30mM-Pi_2-W",
+                                                        "WT_30mM-Pi_3-W",
+                                                        "S217A_0mM-Pi_1.5-W",
+                                                        "S217A_30mM-Pi_1.5-W",
+                                                        "S217A_30mM-Pi_2-W",
+                                                        "S217A_30mM-Pi_3-W"))
+
+
+
+splitConditions <- function(x, n){
+        strsplit(x, split = "_", fixed = TRUE)[[1]][[n]]
+}
+
+myoV$myo <- sub("_.*", "", myoV$conditions2)
+myoV$prettyConditions <- gsub("_", " ", myoV$conditions2)
+myoV$prettyConditions <- factor(myoV$prettyConditions, levels = gsub("_", " ", c("WT_0mM-Pi_1.5-W",
+                                                                        "WT_30mM-Pi_1.5-W",
+                                                                        "WT_30mM-Pi_2-W",
+                                                                        "WT_30mM-Pi_3-W",
+                                                                        "S217A_0mM-Pi_1.5-W",
+                                                                        "S217A_30mM-Pi_1.5-W",
+                                                                        "S217A_30mM-Pi_2-W",
+                                                                        "S217A_30mM-Pi_3-W")))
+
+
+myoV$myo <- factor(myoV$myo, levels = c("WT", "S217A"))
+
+myoV$pi  <- sapply(as.character(myoV$conditions2), splitConditions, n = 2)
+
+myoV$power <- sapply(as.character(myoV$conditions2), splitConditions, n = 3)
+
+myoV$piPower <- paste0(myoV$pi, "_", myoV$power)
+
+myoV$power2  <- sub("-.*", "", myoV$power)
+
+myoV$velocity  <- myoV$displacement_nm / myoV$time_on_ms
+
+dataSummary <- myoV[, 
+                    .(displacementAvg = mean(displacement_nm),
+                      displacementSD = sd(displacement_nm), 
+                      displacementSE = (sd(displacement_nm)/sqrt(.N)),
+                      forceAvg = mean(force),
+                      forceSE = (sd(force)/sqrt(.N)),
+                      forceSD = sd(force),
+                      timeOnAvg = mean(time_on_ms),
+                      timeOnSD = sd(time_on_ms),
+                      timeOnSE = (sd(time_on_ms)/sqrt(.N)),
+                      timeOffAvg = mean(time_off_ms, na.rm = TRUE),
+                      timeOffSD = sd(time_off_ms, na.rm = TRUE),
+                      trapStiffnessAvg = mean(trap_stiffness, na.rm = TRUE),
+                      velocityAvg = mean(velocity, na.rm = TRUE),
+                      velocitySE = (sd(velocity)/sqrt(.N))),
+                    by = list(conditions2, myo, pi, power, power2, piPower)]
+
+reds  <- RColorBrewer::brewer.pal(9, "Reds")
+blues  <- RColorBrewer::brewer.pal(9, "Blues")
+
+plot_colors <- c(blues[[4]], blues[[5]], blues[[7]], blues[[9]],
+                 reds[[4]], reds[[5]], reds[[7]], reds[[9]])
+
+plot_colors2 <- c(blues[[5]], blues[[5]], blues[[7]], blues[[9]],
+                 reds[[5]], reds[[5]], reds[[7]], reds[[9]])
+
+plot_colors3 <- c("grey40", blues[[5]], blues[[7]], blues[[9]],
+                 "grey40", reds[[5]], reds[[7]], reds[[9]])
+#### TRAP TRACES #### 
+wt_con_trace_1.5w <- readRDS("traces/wt-con-1.5watts_2021-02-08_obs-04_13.3539-18.8743.rds")
+(trace1 <- wt_con_trace_1.5w + 
+        ggtitle("WT 0mM-Pi (0.02 pN/nm)")+
+        scale_color_manual(values = c("black", rep("grey40", 5)))+
+        theme_void()+
+        theme(
+         legend.position = "none",
+         plot.title = element_text(size = 10, hjust = 0.5, face = "bold"),
+         plot.subtitle = element_text(size = 9),
+         plot.margin = margin(t = 0,  # Top margin
+                              r = 0,  # Right margin
+                              b = 0,  # Bottom margin
+                              l = 0) # Left margin
+             )
+        )
+
+
+wt_pi_trace_1.5w <- readRDS("traces/wt-pi-1.5-watts test_2020-12-19_obs-09_10.0407-15.7875.rds")
+(trace2 <- wt_pi_trace_1.5w +
+        ggtitle("WT 30mM-Pi (0.02 pN/nm)")+
+        scale_color_manual(values = c("black", rep(plot_colors2[[2]], 15)))+
+        theme_void()+
+        theme(
+         legend.position = "none",
+         plot.title = element_text(size = 10, hjust = 0.5, face = "bold"),
+         plot.subtitle = element_text(size = 9),
+         #          plot.margin = margin(t = 0,  # Top margin
+         #                              r = 0,  # Right margin
+         #                              b = 0,  # Bottom margin
+         #                              l = 0) # Left margin
+             )
+        )
+
+wt_pi_trace_3w <- readRDS("traces/wt-pi-test-3-watts_2021-06-04_obs-03_10.5301-16.7364.rds")
+(trace3 <- wt_pi_trace_3w +
+        ggtitle("WT 30mM-Pi (0.04 pN/nm)")+
+        scale_y_continuous(breaks = seq(-100, 100, by = 20))+
+        scale_color_manual(values = c("black", rep(plot_colors2[[3]], 15)))+
+        theme_void()+
+        theme(
+         legend.position = "none",
+         plot.title = element_text(size = 10, hjust = 0.5, face = "bold"),
+         plot.subtitle = element_text(size = 9),
+         #          plot.margin = margin(t = 0,  # Top margin
+        #                              r = 0,  # Right margin
+         #                              b = 0,  # Bottom margin
+         #                              l = 0) # Left margin
+             )
+)
+trace3
+
+
+
+wt_pi_trace_3w_zoom <- readRDS("traces/wt-pi-test-3-watts_2021-06-04_obs-03_13.2451-13.4092.rds")
+(trace3_zoom <- wt_pi_trace_3w_zoom +
+ #         ggtitle("WT 30mM-Pi", subtitle = "Medium Power - 0.1 pN/nm")+
+        scale_color_manual(values = c("black", rep(plot_colors[[3]], 15)))+
+        scale_x_continuous(breaks  = seq(0, 1, by = 1/20))+
+        scale_y_continuous(breaks  = seq(-40, 100, by = 40))+
+        xlab("seconds")+
+        ylab("nanometers")+
+        theme_linedraw()+
+        theme(
+                plot.title = element_text(size = 12),
+                panel.border = element_rect(color = "grey50", linetype = "dashed", size = 1), 
+                legend.position = "none"
+        )
+        )
+
+
+colorz <- RColorBrewer::brewer.pal(8, 'Dark2')
+wtSig <- data.frame(myo = 'WT', pi = '0mM-Pi', power = '1.5-W', y = 230, label = '#')
+ggplot()+
+        geom_errorbar(data = dataSummary,
+                      aes(x = myo,
+                          y = timeOnAvg,
+                          ymax = timeOnAvg + timeOnSE,
+                          ymin = timeOnAvg - timeOnSE,
+                          color = power),
+                      width = 0.25,
+                      position = position_dodge(width = 0.75))+
+        geom_col(data = dataSummary,
+                 aes(x = myo, 
+                     y = timeOnAvg,
+                  #   alpha = power,
+                     fill = power),
+                 width = 0.73,
+                 color = 'black',
+                 #                     size = 1,
+                 position = position_dodge())+
+        geom_text(data = wtSig, aes(x = myo, y = y, label = label), color = colorz[[1]])+
+        xlab("")+
+        ylab("Time (ms)")+
+        scale_y_continuous(breaks = seq(0, 300, by = 50), expand = expansion(0, c(0, 10)))+
+        scale_fill_manual(values = colorz)+
+        scale_color_manual(values = c(rep("black", 3)))+
+        facet_wrap(~pi)+
+        theme_cowplot(10)+
+        theme(
+                strip.background = element_rect(fill = "transparent"),
+                strip.text = element_text(face = "bold", size = 10)
+        )
+
+(ggTimeOn  <- 
+        ggplot()+
+        geom_errorbar(data = dataSummary,
+                      aes(x = pi,
+                          y = timeOnAvg,
+                          ymax = timeOnAvg + timeOnSE,
+                          ymin = timeOnAvg - timeOnSE,
+                          group = power,
+                          color = conditions2),
+                       width = 0.25,
+                       #                        size = 1,
+                       position = position_dodge(width = 0.75))+
+        geom_col(data = dataSummary,
+                 aes(x = pi, 
+                     y = timeOnAvg,
+                    fill = conditions2,
+                    color = conditions2),
+                    width = 0.73,
+                    #                     size = 1,
+                    position = position_dodge(width = 0.75))+
+        geom_text(data = dataSummary,
+                  aes(x = pi,
+                      y = 0, 
+                      label = power2,
+                      group = power),
+                  vjust = -1,
+                 position = position_dodge(width = 0.75),
+                 size = 4)+
+        facet_wrap(~myo, scales = "free_x")+
+        xlab("")+
+        ylab("Time (ms)")+
+        ggtitle("Attachment Times")+
+        scale_fill_manual(values = plot_colors2, name = "Conditions")+
+        scale_color_manual(values = plot_colors3, name = "Conditions")+
+        scale_y_continuous(expand = expansion(0, c(0, 10)))+
+        theme_cowplot(10)+
+        theme(
+         legend.position = "none",
+         strip.background = element_rect(fill = "transparent"),
+         strip.text = element_text(face = "bold")
+       )
+)
+
+
+
+#######################################################################
+# Cumulative Distributions
+#######################################################################
+
+timeOnECDF  <- myoV[, .(conditions = conditions2,
+                        timeOn = unique(time_on_ms),
+                        ecdf = ecdf(time_on_ms)(unique(time_on_ms))),
+                   by = list(conditions2, myo, pi, power)]
+
+(ggTimeOnECDF  <- 
+        ggplot(timeOnECDF, aes(timeOn, ecdf)) + 
+         geom_step(aes(color = conditions, linetype = pi), size = 0.75)+
+         coord_cartesian(xlim = c(0, 2000), ylim = c(0.75, 1))+
+         facet_grid(~myo)+
+         ggtitle("Event Duration (cumulative)")+
+         ylab("Cumulative Distribution")+ 
+         xlab("Time (ms)")+
+         scale_color_manual(values = plot_colors)+
+         scale_linetype_manual(values = c("dashed", "solid"))+
+         theme_cowplot(10)+ 
+         theme(
+          strip.background = element_rect(fill="transparent"),
+          strip.text = element_text(face = "bold"),
+          legend.position = "none"
+         )
+)
+########################################################################
+
+# fig1Left  <- 
+#         (ggdraw(ggTimeOnECDF)+
+#          draw_plot(ggTimeOn, x = 0.25, y = 0.075, width = 0.75, height = 0.65)+
+#          draw_plot_label(
+#          c("C", "D"),
+#          c(0, 0.26),
+#          c(1, 0.7)
+#          )
+#         )
+
+
+trapSchematic  <- image_read("traps-500dpi.png")
+
+ggtrap  <- ggdraw()+ draw_image(trapSchematic)
+
+fig1traces <- plot_grid(trace1, trace2, trace3, trace3_zoom,  ncol = 1, rel_heights = c(1, 1, 1, 2), labels = c("B", "", "", "D"))
+
+( fig1left <- plot_grid(ggtrap, ggTimeOn,  ncol = 1, labels = c("A", "C"), rel_heights = c(0.5, 0.5)) )
+
+
+( fig1  <- plot_grid(fig1left, fig1traces, ncol = 2, rel_widths  = c(0.4, 0.6)) )
+
+fig1middle <- plot_grid(ggTimeOnECDF, ggTimeOn, nrow = 1, labels = c("B", "C"))
+
+
+ggsave("figs/fig1.png", bg = "white")
+#################################################################################
+#################################################################################
+myoVLinear  <- myoV[, 
+                    .(displVsTon = list(.SD)), 
+                    by = list(conditions2, myo, pi, power), 
+                    .SDcols = c("displacement_nm", "time_on_ms")]
+
+myoVLinear$mod <- lapply(myoVLinear$displVsTon, function(x) lm(displacement_nm ~ time_on_ms, data = x))
+
+myoVLinear$line <-  lapply(myoVLinear$mod, function(x) as.data.frame(predict(x, 
+                                                                     newdata = data.frame(time_on_ms = 1:3000),
+                                                                     interval = "confidence")) |>
+                                                         transform(x = 1:3000))
+toDegrees  <- 180/pi
+
+myoVLinear$slope  <- sapply(myoVLinear$mod, function(x) coef(x)[[2]])
+
+myoVLines <- myoVLinear[, 
+                        line[[1]], 
+                        by = list(conditions2, myo, pi, power)
+                       ] 
+
+
+(ggTimeDispl <- ggplot()+
+                 geom_point(data = myoV,
+                            aes(time_on_ms,
+                                displacement_nm, 
+                                color = conditions2),
+                           alpha = 0.4, 
+                           shape = 16)+
+                geom_line(data = myoVLines, 
+                          aes(x = x, 
+                              y = fit),
+                          color = "black")+
+                geom_text(data = myoVLinear,
+                          aes(x = Inf,
+                              y = 0,
+                              label = paste0("slope = ", round(slope*1000, 0), " nm/s"),
+                              color = conditions2),
+                              hjust = 1,
+                              vjust = 0,
+                              size = 3.5
+                              )+
+                 facet_grid(myo~power+pi, scales = "free")+
+                 coord_cartesian(xlim = c(0, 2500), ylim = c(0, 150))+
+                 scale_color_manual(values = plot_colors)+
+                 xlab("Time (ms)")+
+                 ylab("Displacement (nm)")+
+                 ggtitle("Displacement Vs. Duration")+
+                 theme_cowplot(12)+
+                 theme(
+                  legend.position = "none", 
+                  strip.background = element_rect(fill = "transparent"),
+                  strip.text = element_text(face = "bold"),
+                  axis.text.x = element_text(size = 8)
+                )
+        )
+
+#ggsave("figs/time-vs-displ.png", bg = "white")
+#################axis.text.y = element_text(vjust = 0)####################################################
+# FORCES
+#####################################################################
+
+(ggForce  <- 
+        ggplot()+
+        geom_errorbar(data = dataSummary,
+                      aes(x = pi,
+                          y = forceAvg,
+                          ymax =  forceAvg + forceSE,
+                          ymin = forceAvg - forceSE,
+                          group = power,
+                          color = conditions2),
+                       width = 0.25,
+                       position = position_dodge(width = 0.75))+
+        geom_col(data = dataSummary,
+                 aes(x = pi, 
+                     y = forceAvg,
+                    fill = conditions2,
+                    color = conditions2),
+#                   color = "black",
+                    width = 0.75,
+                    position = position_dodge(width = 0.75))+
+        geom_text(data = dataSummary,
+                  aes(x = pi, 
+                      y = 0, 
+                      label = power2,
+                      group = power),
+                 position = position_dodge(width = 0.75),
+                 size = 3,
+                 vjust = -1)+
+facet_wrap(~myo, scales = "free_x", nrow = 1)+
+        xlab("")+
+        ylab("piconewtons")+
+        ggtitle("Forces")+
+        scale_fill_manual(values = plot_colors2, name = "Conditions")+
+        scale_color_manual(values = plot_colors3, name = "Conditions")+
+        scale_y_continuous(expand = expansion(mult = c(0, 0.1)))+
+        theme_cowplot(10)+
+        theme(
+         legend.position = "none",
+         strip.background = element_rect(fill = "transparent"),
+         strip.text = element_text(face = "bold"),
+         plot.title = element_text(size = 12)
+       )
+)
+
+
+
+
+(ggDispl  <- 
+        ggplot()+
+        geom_errorbar(data = dataSummary,
+                      aes(x = pi,
+                          y = displacementAvg,
+                          ymax =  displacementAvg + displacementSE,
+                          ymin = displacementAvg - displacementSE,
+                          group = power,
+                          color = conditions2),
+                       width = 0.25,
+                       position = position_dodge(width = 0.75))+
+        geom_col(data = dataSummary,
+                 aes(x = pi, 
+                     y = displacementAvg,
+                    fill = conditions2,
+                    color = conditions2),
+#                   color = "black",
+                    width = 0.75,
+                    position = position_dodge(width = 0.75))+
+        geom_text(data = dataSummary,
+                  aes(x = pi, 
+                      y = 2.5, 
+                      label = power2,
+                      group = power),
+                 position = position_dodge(width = 0.75),
+                 size = 3)+
+        facet_wrap(~myo, scales = "free_x")+
+        xlab("")+
+        ylab("nanometers")+
+        ggtitle("Displacements")+
+        scale_fill_manual(values = plot_colors2, name = "Conditions")+
+        scale_color_manual(values = plot_colors3, name = "Conditions")+
+        scale_y_continuous(expand = expansion(0, c(0, 5)))+
+        theme_cowplot(10)+
+        theme(
+         legend.position = "none",
+         strip.background = element_rect(fill = "transparent"),
+         strip.text = element_text(face = "bold"),
+         plot.title = element_text(size = 12)
+       )
+)
+
+trapForces  <- image_read("trap-force-500dpi.png")
+
+ggtrapForce  <- ggdraw()+ draw_image(trapForces)
+
+
+equiData <- fread("data/Equipartitions_traces.csv")
+
+( ggEqui <- ggplot(data = equiData, aes(x = 1:length(processed_bead1.5)))+
+        geom_line(aes(y = processed_bead1.5), color = "black")+
+        geom_line(aes(y = processed_bead2), color = "hotpink3")+
+        geom_line(aes(y = processed_bead3), color = "grey50")+
+        coord_cartesian(xlim = c(0, 10000), ylim = c(-80, 80))+
+        theme_cowplot()+
+        xlab("")+
+        ylab("nanometers")+
+        theme(
+              axis.line.x = element_blank(),
+              axis.text.x = element_blank(),
+              axis.ticks.x = element_blank()
+        )
+        )
+
+
+equi1.5 <- data.frame(x = -100:100,
+                      y = dnorm(-100:100, 
+                                mean(equiData$processed_bead1.5, na.rm = T), 
+                                sd = sd(equiData$processed_bead1.5, na.rm = T)),
+id = 1.5)
+
+
+equi2 <- data.frame(x = -90:90,
+                      y = dnorm(-90:90, 
+                                mean(equiData$processed_bead2, na.rm = T), 
+                                sd = sd(equiData$processed_bead2, na.rm = T)),
+id = 2)
+
+equi3 <- data.frame(x = -50:50,
+                      y = dnorm(-50:50, 
+                                mean(equiData$processed_bead3, na.rm = T), 
+                                sd = sd(equiData$processed_bead3, na.rm = T)),
+id = 3)
+
+
+equiCurve <- rbind(equi1.5, equi2, equi3)
+
+(ggEquiCurve <- ggplot(data = equiCurve)+
+       geom_line(aes(x = x, y = y, color = as.factor(id)), size = 1.5)+
+       scale_y_log10()+
+       coord_flip(xlim = c(-80, 80), ylim = c(1e-4, 0.1))+
+       scale_color_manual(values = c("black", "hotpink3", "grey50"))+
+       theme_cowplot()+
+       ylab("log(density)")+
+       xlab("")+
+        theme(
+              #               axis.line.y = element_blank(),
+              axis.text.x = element_blank(),
+              axis.text.y = element_blank(),
+              axis.ticks.x = element_blank(),
+              legend.position = "none"
+        )
+       )
+
+(fig2Top <- plot_grid(ggtrapForce, ggEqui, ggEquiCurve, labels = "AUTO", rel_widths = c(0.3, 0.7, 0.3), nrow = 1))
+
+( fig2Bottom <- plot_grid(ggDispl, ggForce, labels = c("D", "E")))
+( fig2 <- plot_grid(fig2Top, fig2Bottom, nrow = 2, rel_heights = c(0.4, 0.6))) 
+
+ggsave("figs/fig2.png", bg = "white")
+
+
+(forceRidges <-  ggplot(data = myoV)+
+                   geom_density_ridges(aes(x = force, 
+                                           y = prettyConditions, 
+                                           fill = prettyConditions, 
+                                           color = prettyConditions),
+                                       quantile_lines = TRUE, 
+                                       quantiles = 2,
+                                       jittered_points = TRUE,
+                                       position = position_points_jitter(width = 0.05, height = 0),
+                                       point_shape = '|', 
+                                       point_size = 2, 
+                                       point_alpha = 0.8, 
+                                       alpha = 0.7)+
+                   scale_fill_manual(values = plot_colors)+ 
+                   scale_color_manual(values = plot_colors)+ 
+                   scale_y_discrete(limits = rev)+
+                   xlab("piconewtons")+
+                   ylab("")+
+                   ggtitle("Forces (density)")+
+                   theme_ridges(12, center_axis_labels = TRUE)+
+                   theme(
+                    legend.position = "none",
+                    plot.title = element_text(hjust = 0, size = 12),
+                    axis.text.y = element_text(size = 8))
+)
+
+( fig2 <- plot_grid(forceRidges, ggForce) )
+
+ggsave("figs/forces.png", bg = "white")
+
+
+(displRidges <-  ggplot(data = myoV)+
+                   geom_density_ridges(aes(x = displacement_nm, 
+                                           y = prettyConditions, 
+                                           fill = prettyConditions, 
+                                           color = prettyConditions),
+                                       quantile_lines = TRUE, 
+                                       quantiles = 2,
+                                       jittered_points = TRUE,
+                                       position = position_points_jitter(width = 0.05, height = 0),
+                                       point_shape = '|', 
+                                       point_size = 2, 
+                                       point_alpha = 0.8, 
+                                       alpha = 0.7)+
+                   scale_fill_manual(values = plot_colors)+ 
+                   scale_color_manual(values = plot_colors)+ 
+                   scale_y_discrete(limits = rev)+
+                   xlab("nanometers")+
+                   ylab("")+
+                   ggtitle("Displacement Distributions (density)")+
+                   theme_ridges(12, center_axis_labels = TRUE)+
+                   theme(
+                    legend.position = "none",
+                    axis.text.y = element_text(size = 8),
+                    plot.title = element_text(size = 12)
+                    )
+ )
+
+
+#  ggsave("figs/displacement-ridges.png", bg = "white")
+
+
+#################################################################################
+# VELOCITY
+#################################################################################
+
+(ggVelocity <- ggplot()+
+ geom_col(data = dataSummary, 
+          aes(x = pi, 
+              y = velocityAvg*1000, 
+              fill = conditions2,
+              color = conditions2),
+          width = 0.75,
+          position = position_dodge(width = 0.75))+
+geom_errorbar(data = dataSummary, 
+              aes(pi, 
+                  velocityAvg*1000,
+                  ymin = (velocityAvg - velocitySE) * 1000,
+                  ymax = (velocityAvg + velocitySE) * 1000,
+                  color = conditions2),
+              width = 0.25,
+              position = position_dodge(width = 0.75))+
+        geom_text(data = dataSummary,
+                  aes(x = pi, 
+                      y = 0, 
+                      label = power2,
+                      group = power),
+                  vjust = -1, 
+                 position = position_dodge(width = 0.75),
+                 size = 4)+
+facet_wrap(~myo)+
+xlab("")+
+ylab("nm/s")+
+ggtitle("Velocity (average)")+
+scale_fill_manual(values = plot_colors)+ 
+scale_color_manual(values = plot_colors)+
+scale_y_continuous(expand = expansion(mult = c(0, 0.1)))+
+theme_cowplot(12)+
+theme(
+ legend.position = "none",
+ strip.background = element_rect(fill = "transparent"),
+ strip.text = element_text(face = "bold"),
+ plot.title = element_text(size = 12)
+ )
+)
+
+
+(velocityRidges <-  ggplot(data = myoV)+
+                   geom_density_ridges(aes(x = velocity*1000, 
+                                           y = prettyConditions, 
+                                           fill = prettyConditions, 
+                                           color = prettyConditions),
+                                       quantile_lines = TRUE, 
+                                       quantiles = 2,
+                                       jittered_points = TRUE,
+                                       position = position_points_jitter(width = 0.05, height = 0),
+                                       point_shape = '|', 
+                                       point_size = 2, 
+                                       point_alpha = 0.8, 
+                                       alpha = 0.7)+
+                   scale_fill_manual(values = plot_colors)+ 
+                   scale_color_manual(values = plot_colors)+ 
+                   scale_y_discrete(limits = rev)+
+                   scale_x_log10()+
+                   coord_cartesian(xlim = c(1, 10000))+
+                   xlab("nm/s")+
+                   ylab("")+
+                   ggtitle("Velocity Distributions (density)")+
+                   theme_ridges(12, center_axis_labels = TRUE)+
+                   theme(
+                    legend.position = "none",
+                    axis.text.y = element_text(size = 8),
+                    plot.title = element_text(size = 12)
+                    )
+ )
+
+( figVelocity  <- plot_grid(velocityRidges, ggVelocity) )
+
+ggsave("figs/velocity.png", bg = "white")
+
+
+
+ggplot()+
+        geom_point(data = myoV,
+        aes(x = force, 
+            y = velocity*1000, 
+            color = conditions2),
+                   alpha = 0.4,
+                   shape = 16)+
+        facet_grid(myo~pi+power)+
+                   scale_color_manual(values = plot_colors)+
+xlab("Force (pN)")+
+ylab("Velocity (nm/s)")+
+ggtitle("Force Vs. Velocity")+
+theme_cowplot(12)+
+theme(
+ legend.position = "none",
+ strip.background = element_rect(fill = "transparent"),
+ strip.text = element_text(face = "bold"),
+ plot.title = element_text(size = 12)
+ )
+ggsave("figs/force-velocity.png", bg = "white")
+
+
+###############################################################################################
+# FORCE vs 1/Time-ON
+################################################################################################
+myoVForces <- myoV[, .(conditions2, myo, pi, power, force)]
+
+boxData  <- merge(myoVForces, dataSummary, by = c("conditions2", "myo", "pi", "power"), all.x = TRUE)
+
+boxData[, rate := 1000*(1/timeOnAvg)]
+
+ggplot(data = dataSummary[pi == "30mM-Pi"], aes(x = forceAvg)) +
+        geom_point(aes(y = 1000 * 1 / timeOnAvg,
+                       color = conditions2),
+                   size = 3)+
+xlab("piconewtons")+
+ggtitle("Rate of Force Development")+
+scale_color_manual(values = c(plot_colors[2:4], plot_colors[6:8]), guide = "none")+
+scale_fill_manual(values = plot_colors, guide = "none")+
+scale_shape_manual(values = c(15, 16), name = "")+
+facet_grid(~myo)+
+theme_cowplot(12)+
+theme(
+ strip.background = element_rect(fill = "transparent"),
+ strip.text = element_text(face = "bold"),
+ plot.title = element_text(size = 12)
+ )
+
+ggsave("figs/rate-of-force-development.png", bg = "white")

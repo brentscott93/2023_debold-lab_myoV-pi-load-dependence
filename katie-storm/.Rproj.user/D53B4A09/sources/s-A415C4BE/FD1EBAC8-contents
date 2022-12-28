@@ -1,0 +1,16 @@
+library(readxl)
+library(ggplot2)
+library(cowplot)
+library(tidyverse)
+
+storm <- read_excel("myosin5-real10ug-FOV1_subFOV1.xlsx")
+
+storm$
+rename(storm, x=`CenterX[µm]`, y=)
+
+
+ggplot()+
+  geom_point(aes(storm$x, storm$y), size=2, shape=16)
+
+ggplot(aes(storm$x, storm$y))+
+  geom_histogram()

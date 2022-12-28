@@ -1,0 +1,54 @@
+
+Call:
+lm(formula = time_on_ms ~ myo + pi + load + (myo * pi) + (myo * 
+    load), data = myoV)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-203.3 -102.8  -57.5   13.5 9383.7 
+
+Coefficients:
+                   Estimate Std. Error t value Pr(>|t|)    
+(Intercept)         208.739      8.722  23.932  < 2e-16 ***
+myoS217A             -1.396     15.137  -0.092  0.92653    
+pi30mM-Pi           -52.442     10.457  -5.015 5.46e-07 ***
+load0.06            -37.728     17.603  -2.143  0.03213 *  
+load0.1             -64.689     19.711  -3.282  0.00104 ** 
+myoS217A:pi30mM-Pi   42.807     19.864   2.155  0.03120 *  
+myoS217A:load0.06    -9.011     24.893  -0.362  0.71737    
+myoS217A:load0.1    -35.048     25.844  -1.356  0.17511    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 278.3 on 5889 degrees of freedom
+Multiple R-squared:  0.01698,	Adjusted R-squared:  0.01582 
+F-statistic: 14.54 on 7 and 5889 DF,  p-value: < 2.2e-16
+
+
+ Transform the response by taking the log10
+
+Call:
+lm(formula = log10(time_on_ms) ~ myo + pi + load + (myo * pi) + 
+    (myo * load), data = myoV)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-1.43505 -0.25793 -0.01641  0.21738  1.94434 
+
+Coefficients:
+                   Estimate Std. Error t value Pr(>|t|)    
+(Intercept)         2.16744    0.01180 183.749  < 2e-16 ***
+myoS217A           -0.12992    0.02047  -6.346 2.37e-10 ***
+pi30mM-Pi          -0.14477    0.01414 -10.236  < 2e-16 ***
+load0.06           -0.13584    0.02381  -5.706 1.21e-08 ***
+load0.1            -0.19875    0.02666  -7.456 1.02e-13 ***
+myoS217A:pi30mM-Pi  0.18397    0.02686   6.848 8.22e-12 ***
+myoS217A:load0.06  -0.02353    0.03366  -0.699   0.4847    
+myoS217A:load0.1   -0.08053    0.03495  -2.304   0.0212 *  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.3764 on 5889 degrees of freedom
+Multiple R-squared:  0.07524,	Adjusted R-squared:  0.07414 
+F-statistic: 68.44 on 7 and 5889 DF,  p-value: < 2.2e-16
+
