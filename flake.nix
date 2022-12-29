@@ -16,7 +16,8 @@
                                     ggpubr
                                     readxl 
                                     randomcoloR 
-                                    dplyr ];
+                                    dplyr
+                                    svglite ];
     in {
       devShells.default = pkgs.mkShell {
         nativeBuildInputs = [ pkgs.bashInteractive ];
