@@ -57,7 +57,7 @@ blues  <- RColorBrewer::brewer.pal(9, "Blues")
 myoV$myo <- myoV$`myosin type`
 myoV$myo <- factor(myoV$myo, levels = c("WT", "S217A"))
 myoV$Load <- factor(myoV$Load, levels = c("Low", "Med", "High"))
-
+myoV$pi_mM <- paste0(myoV$Pi, "mM-Pi")
 
 
 colz <- c(blues[4], blues[6], blues[8], reds[4], reds[6], reds[8])
@@ -163,7 +163,7 @@ wt_con_trace_1.5w$layers[[1]] <- NULL
 (trace1 <- 
     wt_con_trace_1.5w + 
     geom_line(linewidth = 0.3)+
-    coord_cartesian(c(0, 5.25))+
+    coord_cartesian(xlim = c(0, 5.25), ylim = c(-100, 100))+
     scale_color_manual(values = c("black", rep(blues[[5]], 15)))+
     scale_x_continuous(breaks = 0:10, expand = expansion(0, 0.2))+
     scale_y_continuous(breaks = seq(-120, 120, by = 40), expand = expansion(0.01, 0))+
@@ -175,7 +175,7 @@ wt_con_trace_1.5w$layers[[1]] <- NULL
     # geom_segment(aes(x = -0.1, y= -80, xend = -0.1, yend=-40), color = "black")+
     annotate("text", x = 2.25, y = -50, label = "t[on]", parse=TRUE, size = 3, vjust = 0.5 )+
     annotate("text", x = 3.05, y = 52, label = "[ ]", size = 4, vjust = 0.5, color = "red" )+
-    annotate("text", x = 3.25, y = 51, label = "Peak Displacement", size = 2, vjust = 0.5, hjust = 0)+
+    annotate("text", x = 3.25, y = 53, label = "Peak Displacement", size = 2, vjust = 0.5, hjust = 0)+
     ggtitle("WT 0mM-Pi (0.04 pN/nm)")+
     theme_cowplot()+
     theme(
@@ -208,6 +208,7 @@ wt_con_trace_3w$layers[[1]] <- NULL
     ggtitle("WT 0mM-Pi (0.1 pN/nm)")+
     ## annotate("segment", x = -0.1, y= -60, xend = 0.9, yend=-60,  color = "black", size = 1.5)+
     ## annotate("segment", x = -0.1, y= -60, xend = -0.1, yend=-20, color = "black", size = 1 )+
+    coord_cartesian(ylim = c(-100, 100))+
     theme_cowplot()+
     theme(
       plot.title = element_markdown(size = 8, hjust = 0.5 ),
@@ -234,13 +235,13 @@ wt_pi_trace_1.5w <- readRDS("traces/wt-pi-1.5-watts test_2020-12-19_obs-09_10.04
 wt_pi_trace_1.5w$layers[[1]] <- NULL
 (trace2 <- wt_pi_trace_1.5w +
     geom_line(linewidth = 0.3)+
-    coord_cartesian(c(0, 3.685))+
+    coord_cartesian(xlim = c(0, 3.685), ylim = c(-100, 100))+
     scale_color_manual(values = c("black", rep(blues[[5]], 15)))+
     scale_x_continuous(breaks = 0:10, expand = expansion(0, 0.09))+
     scale_y_continuous(breaks = seq(-120, 120, by = 40), expand = expansion(0.01, 0))+
     ggtitle("WT 30mM-Pi (0.04 pN/nm)")+
-    geom_segment(aes(x = -0.1, y= -60, xend = 0.9, yend=-60),  color = "black")+
-    geom_segment(aes(x = -0.1, y= -60, xend = -0.1, yend=-20), color = "black")+
+    ## geom_segment(aes(x = -0.1, y= -60, xend = 0.9, yend=-60),  color = "black")+
+    ## geom_segment(aes(x = -0.1, y= -60, xend = -0.1, yend=-20), color = "black")+
     theme_cowplot()+
     theme(
       plot.title = element_markdown(size = 8, hjust = 0.5 ),
@@ -267,7 +268,7 @@ wt_pi_3w_data <- dplyr::filter(wt_pi_trace_3w$data, new_time_index >= 5000*0.09)
 wt_pi_trace_3w$data <- wt_pi_3w_data
 (trace3 <- wt_pi_trace_3w +
           geom_line(size = 0.3)+
-          coord_cartesian(c(0.09, 5.04))+
+          coord_cartesian(xlim = c(0.09, 5.04), ylim = c(-100, 100))+
           scale_color_manual(values = c("black", rep(blues[[8]], 15)))+
           scale_x_continuous(
            # limits = c(0.1, 5.04),
@@ -351,7 +352,7 @@ s217a_con$layers[[1]] <- NULL
 (s217a_con <-
   s217a_con+
   geom_line(size = 0.3)+
-  coord_cartesian(c(0, 5))+
+  coord_cartesian(xlim = c(0, 5), ylim = c(-100, 100))+
     scale_x_continuous(breaks = 0:10, expand = expansion(0.01, 0.1))+
   scale_y_continuous(breaks = seq(-121, 120, by = 40), expand = expansion(0.01, 0))+
   scale_color_manual(values = c("black", rep(reds[[5]], 100)))+
@@ -382,7 +383,7 @@ s217a_con_3w$layers[[1]] <- NULL
 (s217a_con_3w <-
   s217a_con_3w+
   geom_line(linewidth = 0.3)+
-  coord_cartesian(c(0, 2.1))+
+  coord_cartesian(xlim = c(0, 2.1), ylim = c(-100, 100))+
     scale_x_continuous(breaks = 0:10, expand = expansion(0.01, 0.1))+
   scale_y_continuous(breaks = seq(-120, 120, by = 40), expand = expansion(0.01, 0))+
   scale_color_manual(values = c("black", rep(reds[[8]], 100)))+
@@ -414,6 +415,7 @@ s217a_pi$layers[[1]] <- NULL
   s217a_pi+
   geom_line(size = 0.3)+
   #coord_cartesian(c(0, 4))+
+  coord_cartesian(ylim = c(-100, 100))+
   scale_x_continuous(breaks = 0:10, expand = expansion(0.01, 0.1))+
   scale_y_continuous(breaks = seq(-120, 120, by = 40), expand = expansion(0.01, 0))+
   scale_color_manual(values = c("black", rep(reds[[5]], 100)))+
@@ -446,7 +448,7 @@ s217a_pi_3w$layers[[1]] <- NULL
 (s217a_pi_3w <-
 s217a_pi_3w+
   geom_line(size = 0.3)+
-  coord_cartesian(c(0, 5))+
+  coord_cartesian(xlim = c(0, 5), ylim = c(-100, 100))+
   #  geom_segment(data = NULL, aes(x = 0, y = -60, xend = 1, yend = -60), color = "black")
   scale_x_continuous(breaks = 0:10, expand = expansion(0.01, 0.2))+
   scale_y_continuous(breaks = seq(-120, 120, by = 40), expand = expansion(0.01, 0))+
@@ -530,7 +532,7 @@ timeOnECDF$pi_mM <- paste0(timeOnECDF$Pi, "mM-Pi")
 
 (ggTimeOnECDF  <- 
     ggplot(timeOnECDF, aes(timeOn, ecdf)) +
-    geom_step(aes(color = myo_load, linetype = pi_mM), size = 0.5)+
+    geom_step(aes(color = myo_load, linetype = pi_mM), linewidth = 0.3, alpha = 0.7)+
     ## annotate("rect", xmin = 0, xmax = 800, ymin = 0, ymax = 1, fill = "grey50", color = NA, alpha = 0.2)+
     ## facet_grid(myo~pi_mM)+
     scale_color_manual(values = colz)+
@@ -548,13 +550,13 @@ timeOnECDF$pi_mM <- paste0(timeOnECDF$Pi, "mM-Pi")
 
 (ggTimeOnECDF2 <-
     ggplot(timeOnECDF, aes(timeOn, ecdf)) +
-    geom_step(aes(color = myo_load, linetype = pi_mM), size = 0.7)+
+    geom_step(aes(color = myo_load, linetype = pi_mM), linewidth = 0.3)+
     facet_grid(myo~pi_mM)+
     scale_color_manual(values = colz)+
-    coord_cartesian(xlim = c(0, 800), ylim = c(0, 1))+
-   ylab("")+
-   xlab("")+
-    theme_cowplot(8)+
+    coord_cartesian(xlim = c(0, 1000), ylim = c(0, 1))+
+   ylab("Cumulative Probability")+
+   xlab("Time (ms)")+
+    theme_cowplot(12)+
     theme(
      panel.grid = element_blank(),
      legend.position = "none",
@@ -562,8 +564,48 @@ timeOnECDF$pi_mM <- paste0(timeOnECDF$Pi, "mM-Pi")
      )
 )
 
+wt_0 <- myoV[myo == "WT" & pi_mM == "0mM-Pi" & Load %in% c("Low", "High")]
+wt_30 <- myoV[myo == "WT" & pi_mM == "30mM-Pi" & Load %in% c("Low", "High")]
+s217a_0 <- myoV[myo == "S217A" & pi_mM == "0mM-Pi" & Load %in% c("Low", "High")]
+s217a_30 <- myoV[myo == "S217A" & pi_mM == "30mM-Pi" & Load %in% c("Low", "High")]
 
-fig_ton_right <- ggdraw(ggTimeOnECDF)+draw_plot(ggTimeOnECDF2, 0.25, 0.15, 0.7, 0.7 )
+plot_hist <- function(dat, colors){
+ggplot(dat)+
+  geom_histogram(aes(x = time_on_ms,
+                     y = after_stat(density),
+                     fill = Load),
+                 color = "black",
+                 binwidth = 50,
+                 show.legend = FALSE)+
+  facet_grid(~Load, labeller = as_labeller(c("Low" = "0.04 pN/nm", "High" = "0.1 pN/nm")))+
+  coord_cartesian(xlim = c(0, 1000))+
+  scale_y_continuous(expand = expansion(mult = c(0, NA), add = c(0, NA)))+
+  scale_x_continuous(breaks = c(0, 300, 600, 900))+
+  scale_fill_manual(values = colors)+
+  ylab("PDF")+
+  xlab("")+
+  theme_cowplot(10)+
+  theme(
+   strip.background = element_rect(fill = "transparent"),
+   axis.text.y = element_blank(),
+   axis.text.x = element_text(size = 8)
+   )
+}
+
+gg_ton_wt0 <- plot_hist(wt_0, colors = c(plot_colors[[1]], plot_colors[[3]]))
+gg_ton_wt30 <- plot_hist(wt_30, colors = c(plot_colors[[1]], plot_colors[[3]]))
+gg_ton_s2170 <- plot_hist(s217a_0, colors = c(plot_colors[[4]], plot_colors[[6]]))
+gg_ton_s21730 <- plot_hist(s217a_30, colors = c(plot_colors[[4]], plot_colors[[6]]))
+
+fig2_right <-
+ggdraw(ggTimeOnECDF2)+
+  draw_plot(gg_ton_wt0, 0.2, 0.5, 0.3, 0.35)+
+  draw_plot(gg_ton_wt30, 0.6, 0.5, 0.3, 0.35)+
+  draw_plot(gg_ton_s2170, 0.2, 0.09, 0.3, 0.35)+
+  draw_plot(gg_ton_s21730, 0.6, 0.09, 0.3, 0.35)
+
+## fig_ton_right <- ggdraw(ggTimeOnECDF)+
+##   draw_plot(ggTimeOnECDF2, 0.25, 0.15, 0.7, 0.7 )
 
 (ggTimeOn  <-
     ggplot()+
@@ -605,8 +647,10 @@ fig_ton_right <- ggdraw(ggTimeOnECDF)+draw_plot(ggTimeOnECDF2, 0.25, 0.15, 0.7, 
 
 
 
-fig_ton <- plot_grid(ggTimeOn, fig_ton_right, rel_widths = c(0.4, 0.6), labels = c("a", "b") )
-fig_ton_title <- title <- ggdraw() +
+fig_ton <- plot_grid(fig2_right,
+                     plot_grid(NA, ggTimeOn, NA, nrow = 1, rel_widths = c(0.15, 0.5, 0.15)),
+                      ncol = 1, rel_heights = c(0.6, 0.4), labels = c("a", "b") )
+fig_ton_title <- ggdraw() +
   draw_label(
     "Attachment Times",
     fontface = 'bold',
@@ -621,8 +665,23 @@ fig_ton_title <- title <- ggdraw() +
   )
 
 
-png(filename = "figs/figure-2.png", height = 3, width = 7, res = 1200, units = "in")
-plot_grid(fig_ton_title, fig_ton, rel_heights = c(0.1, 1.1), nrow = 2)
+## ggplot(myoV)+
+##   geom_histogram(aes(x = time_on_ms, y = stat(density), fill = myo_load), color = "black", bins = 250)+
+##   scale_fill_manual(values = colz)+
+##   ylab("PDF")+
+##   coord_cartesian(c(0, 1000))+
+##   ## scale_x_log10()+
+##   facet_grid(pi_mM+Load~myo, scales = "free_x")+
+##   theme_cowplot()+
+##   theme(
+##    axis.text.y = element_blank(),
+##    axis.ticks.y = element_blank()
+##   )
+
+## ggsave("figs/dumb-plot2.png")
+
+png(filename = "figs/figure-2.png", height = 7, width = 7, res = 1200, units = "in")
+plot_grid(fig_ton_title, fig_ton, rel_heights = c(0.05, 1.1), nrow = 2)
 dev.off()
 
 
